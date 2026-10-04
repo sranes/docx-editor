@@ -77,6 +77,14 @@ const SDT =
   '<w:p><w:sdt><w:sdtPr><w:alias w:val="Field"/><w:tag w:val="t1"/><w:text/></w:sdtPr>' +
   '<w:sdtContent><w:r><w:t>Hi</w:t></w:r></w:sdtContent></w:sdt></w:p>' +
   '<w:p><w:r><w:t>after</w:t></w:r></w:p><w:sectPr/>';
+const REPEATING_ITEM = (text: string) =>
+  '<w:sdt><w:sdtPr><w15:repeatingSectionItem/></w:sdtPr><w:sdtContent>' +
+  `<w:p><w:r><w:t>${text}</w:t></w:r></w:p></w:sdtContent></w:sdt>`;
+const REPEATING =
+  '<w:sdt xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml"><w:sdtPr>' +
+  '<w:tag w:val="items"/><w15:repeatingSection/></w:sdtPr><w:sdtContent>' +
+  `${REPEATING_ITEM('one')}${REPEATING_ITEM('two')}</w:sdtContent></w:sdt>` +
+  '<w:p><w:r><w:t>after</w:t></w:r></w:p><w:sectPr/>';
 
 const TOC_BODY =
   '<w:p><w:r><w:fldChar w:fldCharType="begin"/>' +
@@ -602,6 +610,21 @@ export function authorableCoverageFixtures(): JournalCoverageFixture[] {
       start: 0,
       end: 5,
       type: 'plainText',
+    })),
+    story('addRepeatingSectionItem', zipDoc({ body: REPEATING }), (store) => ({
+      op: 'addRepeatingSectionItem',
+      controlId: controlId(store),
+    })),
+    story('removeRepeatingSectionItem', zipDoc({ body: REPEATING }), (store) => ({
+      op: 'removeRepeatingSectionItem',
+      controlId: controlId(store),
+      index: 0,
+    })),
+    story('wrapBlocksInContentControl', plainDoc(), (store) => ({
+      op: 'wrapBlocksInContentControl',
+      firstBlockId: firstParagraphId(store),
+      lastBlockId: firstParagraphId(store),
+      tag: 'if:rule',
     })),
     {
       kind: 'insertFragment',

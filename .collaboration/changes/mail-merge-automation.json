@@ -1,0 +1,15 @@
+{
+  "impact": "compatible",
+  "fields": [],
+  "before": "Content controls could not wrap whole paragraphs, repeating-section item operations refused, and applyVariables refused.",
+  "after": "Whole-paragraph spans create block rich text controls, repeating-section items can be added or removed, and applyVariables replaces placeholders atomically across the body, headers, and footers.",
+  "reason": "Each new write commits ordinary canonical nodes through the existing tree operation journal: block content controls and cloned items with fresh ids are structures released participants already load and replicate. No shared schema, protocol message, or repair rule changes.",
+  "tests": [
+    "packages/core/src/store/__tests__/canonical-primitive-journal-coverage.test.ts",
+    "packages/core/src/automation/__tests__/automation-block-content-controls.test.ts",
+    "packages/core/src/automation/__tests__/automation-repeating-sections.test.ts",
+    "packages/core/src/editor/__tests__/apply-variables.test.ts"
+  ],
+  "changeset": "mail-merge-automation",
+  "migration": null
+}

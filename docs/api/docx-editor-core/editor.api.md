@@ -34,6 +34,11 @@ export function blankDocumentBytes(): Uint8Array;
 export const BROWSER_AUTOMATION_CAPABILITIES: AutomationCapabilities;
 
 // @public
+export interface BrowserAutomationHostOptions {
+    readonly historyGroup?: HistoryGroup;
+}
+
+// @public
 export function calendarDateForKey(iso: string, key: string, locale?: string, shift?: boolean): string | null;
 
 // @public
@@ -696,6 +701,20 @@ export const CHROME_GROUPS: readonly [{
         readonly state: {
             readonly kind: "command";
         };
+    }, {
+        readonly id: "richTextControl";
+        readonly labelKey: "toolbar.richTextControl";
+        readonly paths: readonly string[];
+        readonly state: {
+            readonly kind: "command";
+        };
+    }, {
+        readonly id: "plainTextControl";
+        readonly labelKey: "toolbar.plainTextControl";
+        readonly paths: readonly string[];
+        readonly state: {
+            readonly kind: "command";
+        };
     }];
     readonly id: "insert";
     readonly labelKey: "toolbar.insert";
@@ -871,7 +890,7 @@ export interface ChromeMenuSubmenuEntry {
 export function chromeProbeForSlot(slotId: ChromeSlotId): EditorCommand | null;
 
 // @public
-export type ChromeSlotId = 'history.undo' | 'history.redo' | 'zoom.level' | 'styles.style' | 'font.family' | 'font.size' | 'text.bold' | 'text.italic' | 'text.underline' | 'text.strike' | 'text.color' | 'text.highlight' | 'text.link' | 'script.super' | 'script.sub' | 'alignment.left' | 'alignment.center' | 'alignment.right' | 'alignment.justify' | 'list.bullet' | 'list.numbered' | 'list.outdent' | 'list.indent' | 'list.lineSpacing' | 'format.painter' | 'format.clear' | 'review.comments' | 'review.paragraphMarks' | 'review.protectDocument' | 'review.simpleMarkup' | 'review.allMarkup' | 'review.noMarkup' | 'review.original' | 'review.previousChange' | 'review.nextChange' | 'review.acceptAllChanges' | 'review.rejectAllChanges' | 'review.authors' | 'review.editingMode' | 'contentControl.showAll' | 'contentControl.formFill' | 'contentControl.inspector' | 'contentControl.remove' | 'image.insert' | 'image.properties' | 'image.wrap' | 'image.altText' | 'table.insert' | 'table.borderTarget' | 'table.borderColor' | 'table.borderStyle' | 'table.borderWidth' | 'table.cellFill' | 'file.open' | 'file.save' | 'file.exportMarkdown' | 'file.exportPdf' | 'paragraph.dialog' | 'file.pageSetup' | 'insert.footnote' | 'insert.endnote' | 'insert.pageNumber' | 'insert.totalPages' | 'insert.sectionPages' | 'insert.pageXofY' | 'insert.pageBreak' | 'insert.sectionBreakNextPage' | 'insert.sectionBreakContinuous' | 'insert.toc';
+export type ChromeSlotId = 'history.undo' | 'history.redo' | 'zoom.level' | 'styles.style' | 'font.family' | 'font.size' | 'text.bold' | 'text.italic' | 'text.underline' | 'text.strike' | 'text.color' | 'text.highlight' | 'text.link' | 'script.super' | 'script.sub' | 'alignment.left' | 'alignment.center' | 'alignment.right' | 'alignment.justify' | 'list.bullet' | 'list.numbered' | 'list.outdent' | 'list.indent' | 'list.lineSpacing' | 'format.painter' | 'format.clear' | 'review.comments' | 'review.paragraphMarks' | 'review.protectDocument' | 'review.simpleMarkup' | 'review.allMarkup' | 'review.noMarkup' | 'review.original' | 'review.previousChange' | 'review.nextChange' | 'review.acceptAllChanges' | 'review.rejectAllChanges' | 'review.authors' | 'review.editingMode' | 'contentControl.showAll' | 'contentControl.formFill' | 'contentControl.inspector' | 'contentControl.remove' | 'image.insert' | 'image.properties' | 'image.wrap' | 'image.altText' | 'table.insert' | 'table.borderTarget' | 'table.borderColor' | 'table.borderStyle' | 'table.borderWidth' | 'table.cellFill' | 'file.open' | 'file.save' | 'file.exportMarkdown' | 'file.exportPdf' | 'paragraph.dialog' | 'file.pageSetup' | 'insert.footnote' | 'insert.endnote' | 'insert.pageNumber' | 'insert.totalPages' | 'insert.sectionPages' | 'insert.pageXofY' | 'insert.pageBreak' | 'insert.sectionBreakNextPage' | 'insert.sectionBreakContinuous' | 'insert.toc' | 'insert.richTextControl' | 'insert.plainTextControl';
 
 // @public
 export function chromeSlotId(group: {
@@ -1005,7 +1024,7 @@ export interface ContentControlWidgetSession {
 }
 
 // @public
-export function createBrowserAutomationHost(editor: DocxEditorInstance): AutomationHost;
+export function createBrowserAutomationHost(editor: DocxEditorInstance, options?: BrowserAutomationHostOptions): AutomationHost;
 
 // @public
 export function createContentControlListNavigation(locale?: string): ContentControlListNavigation;

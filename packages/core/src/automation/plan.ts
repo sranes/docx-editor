@@ -13,6 +13,10 @@ import { delimiterOccurrences, anchorForSection, placeable, trimmed } from './pl
 import { planFields } from './plan-fields.ts';
 import { planTableOperation } from './plan-tables.ts';
 import { planVirtualFurniture } from './virtual-furniture.ts';
+import { planGetSelection } from './plan-selection.ts';
+import { planRepeatingSectionOp, repeatingSubtypeOf } from './plan-repeating-section.ts';
+import { compileWildcardSearch } from './wildcards.ts';
+import { contentControlInsertOp, contentControlSpanShape } from './plan-content-control-blocks.ts';
 import { isAutomationCommand } from './operations.ts';
 import { planPictures } from './plan-pictures.ts';
 import { planBreakOperation } from './plan-breaks.ts';
@@ -173,6 +177,8 @@ export interface BatchPlannerHost {
   readonly replacementLanding?: (paragraphId: string, start: number, end: number) => number | null;
   /** Moves a reader's caret. Only called when `capabilities.selection` is true. */
   readonly select?: (range: ResolvedRange, mode: AutomationSelectionMode) => void;
+  /** Reads a reader's body selection. Only called when `capabilities.selection` is true. */
+  readonly selection?: () => import('./plan-selection.ts').AutomationPortSelection | null;
 }
 
 export interface BatchPlanner {
@@ -491,12 +497,10 @@ export function createBatchPlanner(host: BatchPlannerHost): BatchPlanner {
   ): PlannedOperation => {
     if (!isTextProjection(options?.projection))
       return refuse('unsupported-content', 'unknown text projection', 'projection');
-    if (options?.matchWildcards === true)
-      return refuse(
-        'unsupported-capability',
-        'wildcard search is not implemented',
-        'matchWildcards'
-      );
+    // Word turns whole-word matching off for wildcards; asking for both is refused, not dropped.
+    const wildcard = options?.matchWildcards === true ? compileWildcardSearch(text, options) : null;
+    if (wildcard && !wildcard.ok)
+      return refuse('unsupported-capability', wildcard.reason, 'wildcard');
     if (options?.ignorePunct === true)
       return refuse(
         'unsupported-capability',
@@ -517,7 +521,7 @@ export function createBatchPlanner(host: BatchPlannerHost): BatchPlanner {
       return refuse('invalid-offset', 'limit must be a non-negative integer', String(requested));
     // An empty story has nothing to scan. Answering no matches is the truth about it, and it is
     // not the same answer as a refusal — there is no error in searching a document with no text.
-    const searched = projectedSearchSpans(reads, scope, handles, text, options);
+    const searched = projectedSearchSpans(reads, scope, handles, text, options, wildcard?.pattern);
     if (!searched.ok)
       return refuse('invalid-offset', 'projection mapping failed', searched.paragraphId);
     return query({ kind: 'spans', spans: searched.spans });
@@ -1564,6 +1568,7 @@ export function createBatchPlanner(host: BatchPlannerHost): BatchPlanner {
     switch (operation.op) {
       case 'getFields':
       case 'getField':
+      case 'getFieldRange':
       case 'setFieldCode':
       case 'deleteField':
       case 'updateFieldResult':
@@ -1619,6 +1624,8 @@ export function createBatchPlanner(host: BatchPlannerHost): BatchPlanner {
             );
           }
         );
+      case 'getSelection':
+        return planGetSelection(host.selection, capabilities.selection, handles, packageReads);
       case 'getDocument':
         return query({ kind: 'handle', handle: handles.document() });
 
@@ -2491,7 +2498,7 @@ export function createBatchPlanner(host: BatchPlannerHost): BatchPlanner {
           return query({ kind: 'text', text: found.control.lock });
         }
         if (operation.op === 'getContentControlSubtype') {
-          return query({ kind: 'text', text: properties.type });
+          return query({ kind: 'text', text: repeatingSubtypeOf(found.node) ?? properties.type });
         }
         if (operation.op === 'getContentControlFileId') {
           // A STRING, and empty for a control the file never numbered — the identity a caller
@@ -2764,6 +2771,20 @@ export function createBatchPlanner(host: BatchPlannerHost): BatchPlanner {
         };
       }
 
+      case 'addRepeatingSectionItem':
+      case 'removeRepeatingSectionItem': {
+        const found = controlOf(operation.contentControl);
+        if (!('control' in found)) return found;
+        const planned = planRepeatingSectionOp(operation, found.control.nodeId, found.reads.part);
+        if (!planned.ok || !('op' in planned)) return planned;
+        const plan = planFor(found.reads);
+        const pin = pinWrite(plan);
+        if (pin) return pin;
+        plan.externalCreatedCount += planned.created;
+        const ops = [planned.op];
+        return { ok: true, kind: 'command', story: found.reads.story, ops, answer: () => APPLIED };
+      }
+
       case 'insertContentControl': {
         const resolved = resolveSpanRef(operation.span, handles, packageReads);
         if (!resolved.ok) return refuse(resolved.code, 'that span is not a place', resolved.detail);
@@ -2772,16 +2793,18 @@ export function createBatchPlanner(host: BatchPlannerHost): BatchPlanner {
         const story = storyReadsOf(resolved.value);
         if (!story) return refuse('invalid-handle', 'that story is not in this document');
         const range = resolved.value;
-        // ONE PARAGRAPH: a control that starts in one paragraph and ends in another is a BLOCK
-        // control over both, which is a different wrapper than the inline one this operation
-        // authors. Refused rather than guessed, so a caller learns which they asked for.
-        if (range.start.paragraphId !== range.end.paragraphId) {
+        // Whole paragraphs make a BLOCK control; a span that cuts a paragraph mark mid-text is
+        // neither shape, so it refuses rather than being rounded to one.
+        const shape = contentControlSpanShape(range, story);
+        if (
+          shape.kind === 'partial' ||
+          (shape.kind === 'blocks' && operation.subtype !== 'richText')
+        )
           return refuse(
             'unsupported-content',
-            'wrapping several paragraphs in one control is not supported here',
+            'several paragraphs take a whole-paragraph rich text control',
             'multi-paragraph'
           );
-        }
         if (!CONTENT_CONTROL_SUBTYPES.has(operation.subtype)) {
           return refuse(
             'unsupported-content',
@@ -2793,23 +2816,17 @@ export function createBatchPlanner(host: BatchPlannerHost): BatchPlanner {
         const plan = planFor(story);
         const pin = pinWrite(plan);
         if (pin) return pin;
-        const conflict = claim(plan, range.start.paragraphId);
-        if (conflict) return conflict;
+        for (const id of shape.kind === 'blocks'
+          ? spanParagraphIds(range, story)
+          : [range.start.paragraphId]) {
+          const conflict = claim(plan, id);
+          if (conflict) return conflict;
+        }
         return {
           ok: true,
           kind: 'command',
           story: story.story,
-          ops: [
-            {
-              op: 'insertContentControl',
-              paragraphId: range.start.paragraphId,
-              start: range.start.offset,
-              end: range.end.offset,
-              type: operation.subtype,
-              ...(operation.tag === undefined ? {} : { tag: operation.tag }),
-              ...(operation.title === undefined ? {} : { alias: operation.title }),
-            },
-          ],
+          ops: [contentControlInsertOp(shape, range, operation)],
           answer: (post) => {
             if (!operation.returnHandle) return APPLIED;
             const after = post.story(story.story);

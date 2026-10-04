@@ -5,10 +5,10 @@ Production use requires a commercial agreement: licensing@eigenpal.com
 */
 // How a search is narrowed, and which of those narrowings this engine actually performs.
 //
-// EVERY FLAG IS HONOURED OR REFUSED. A search that accepted `matchWildcards` and quietly did a
+// EVERY FLAG IS HONOURED OR REFUSED. A search that accepted `ignorePunct` and quietly did a
 // plain-text scan would answer the wrong matches to a caller who then edits at those offsets, so
 // the unimplemented options are passed through to the host, which refuses them. They are declared
-// here — rather than left off the type — because leaving them off would make `{ matchWildcards:
+// here — rather than left off the type — because leaving them off would make `{ ignorePunct:
 // true }` a TypeScript error in code that is source-compatible with Word, and the honest answer to
 // that code is a runtime refusal naming the option, not a compile error naming the type.
 
@@ -19,11 +19,11 @@ import { fail } from '../runtime/model-support.ts';
  * How a search is narrowed.
  *
  * Every flag is honoured or REFUSED — never quietly ignored. A search that accepted
- * `matchWildcards` and then ran a plain-text scan would answer the wrong offsets to a caller who
+ * `ignorePunct` and then ran a plain-text scan would answer the wrong offsets to a caller who
  * edits at them, so the unimplemented options reach the host and come back as `NotSupported`.
  *
  * They are declared here rather than left off the type because omitting them would make
- * `{ matchWildcards: true }` a compile error in code that is otherwise source-compatible with
+ * `{ ignorePunct: true }` a compile error in code that is otherwise source-compatible with
  * Word. The honest answer to that code is a runtime refusal naming the option, not a type error
  * naming the interface.
  *

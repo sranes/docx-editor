@@ -4401,7 +4401,7 @@ export interface TransportPort {
 }
 
 // @public
-export const TREE_DOC_OP_KINDS: readonly ["replaceStoryBlocks", "insertText", "deleteText", "setParagraphMarkRevision", "proposeParagraphMerge", "insertCommentMarker", "acceptRevision", "rejectRevision", "acceptAllRevisions", "rejectAllRevisions", "insertTab", "insertHardBreak", "insertPageBreak", "insertPageField", "setFieldCode", "setListLevel", "setListNumbering", "setParagraphTabStops", "setParagraphMarkProperties", "splitParagraph", "splitParagraphMany", "joinParagraphs", "setRunProperties", "setParagraphProperties", "setSectionProperties", "setSectionMark", "insertHyperlink", "setHyperlinkTarget", "removeHyperlink", "setMathEquation", "removeMathEquation", "setContentControlValue", "removeContentControl", "insertInlineContentControl", "addRepeatingSectionItem", "removeRepeatingSectionItem", "deleteBlock", "insertTable", "insertTableRow", "deleteTableRow", "insertTableColumn", "deleteTableColumn", "setTableColumnWidths", "setTableRightEdgeWidth", "setTableRowHeight", "setTableProperties", "authorTable", "setTableCellBorders", "setTableCellFill", "setTableCellVerticalAlignment", "createHeaderFooter", "deleteHeaderFooter", "linkToPrevious", "unlinkFromPrevious", "setSectionFurnitureOptions", "setDocumentProtection", "insertNote", "deleteNote", "convertNote", "convertAllNotes", "setNoteProperties", "setContentControlProperties", "insertContentControl", "insertFragment", "insertDrawing", "replaceDrawingResource", "deleteDrawing", "resizeDrawing", "cropDrawing", "positionDrawing", "setDrawingWrap", "setDrawingMetadata", "setDrawingLocks", "transformDrawing", "insertToc", "replaceTocResult", "rewriteTocPageNumbers", "refreshFieldResults", "setTextFormFieldDefault", "commitTextFormField", "setLegacyCheckbox", "setLegacyDropdown", "insertBuildingBlock"];
+export const TREE_DOC_OP_KINDS: readonly ["replaceStoryBlocks", "insertText", "deleteText", "setParagraphMarkRevision", "proposeParagraphMerge", "insertCommentMarker", "acceptRevision", "rejectRevision", "acceptAllRevisions", "rejectAllRevisions", "insertTab", "insertHardBreak", "insertPageBreak", "insertPageField", "setFieldCode", "setListLevel", "setListNumbering", "setParagraphTabStops", "setParagraphMarkProperties", "splitParagraph", "splitParagraphMany", "joinParagraphs", "setRunProperties", "setParagraphProperties", "setSectionProperties", "setSectionMark", "insertHyperlink", "setHyperlinkTarget", "removeHyperlink", "setMathEquation", "removeMathEquation", "setContentControlValue", "removeContentControl", "insertInlineContentControl", "addRepeatingSectionItem", "removeRepeatingSectionItem", "deleteBlock", "insertTable", "insertTableRow", "deleteTableRow", "insertTableColumn", "deleteTableColumn", "setTableColumnWidths", "setTableRightEdgeWidth", "setTableRowHeight", "setTableProperties", "authorTable", "setTableCellBorders", "setTableCellFill", "setTableCellVerticalAlignment", "createHeaderFooter", "deleteHeaderFooter", "linkToPrevious", "unlinkFromPrevious", "setSectionFurnitureOptions", "setDocumentProtection", "insertNote", "deleteNote", "convertNote", "convertAllNotes", "setNoteProperties", "setContentControlProperties", "insertContentControl", "wrapBlocksInContentControl", "insertFragment", "insertDrawing", "replaceDrawingResource", "deleteDrawing", "resizeDrawing", "cropDrawing", "positionDrawing", "setDrawingWrap", "setDrawingMetadata", "setDrawingLocks", "transformDrawing", "insertToc", "replaceTocResult", "rewriteTocPageNumbers", "refreshFieldResults", "setTextFormFieldDefault", "commitTextFormField", "setLegacyCheckbox", "setLegacyDropdown", "insertBuildingBlock"];
 
 // @public
 export type TreeDocOp = SetFieldCodeOp | {
@@ -4759,6 +4759,13 @@ export type TreeDocOp = SetFieldCodeOp | {
     readonly start: number;
     readonly tag?: string;
     readonly type: InsertableContentControlKind;
+} | {
+    readonly alias?: string;
+    readonly firstBlockId: string;
+    readonly lastBlockId: string;
+    readonly lock?: ContentControlLock;
+    readonly op: 'wrapBlocksInContentControl';
+    readonly tag?: string;
 } | {
     readonly endnote?: {
         readonly numFmt?: string;

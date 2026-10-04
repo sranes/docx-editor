@@ -75,20 +75,22 @@ export function paintContentControlChrome(
     const isToc = tocControlIds?.has(control.id) === true;
     const active = !isToc && activeIds?.has(control.id) === true;
     const hovered = hoverIds?.has(control.id) === true;
-    pageElement.append(
-      paintContentControlBoundary(
-        document,
-        page,
-        control,
-        options.scale,
-        active,
-        hovered,
-        showAll || active || (isToc && hovered),
-        chrome?.checkedIds?.has(control.id),
-        isToc,
-        chrome?.readOnly === true
-      )
+    const element = paintContentControlBoundary(
+      document,
+      page,
+      control,
+      options.scale,
+      active,
+      hovered,
+      showAll || active || (isToc && hovered),
+      chrome?.checkedIds?.has(control.id),
+      isToc,
+      chrome?.readOnly === true
     );
+    // Show-all is a deliberate view, unlike hover: in it every label stays up, so an author
+    // can see each field's name at once.
+    if (showAll) element.dataset.showAll = '';
+    pageElement.append(element);
   }
 }
 
@@ -209,13 +211,17 @@ function paintContentControlBoundary(
   }
 
   const first = control.fragments.find((fragment) => fragment.pageIndex === page.index);
-  if (first && control.alias) {
+  // The title, as Word shows it; a control with no title shows its tag, which is how a
+  // template's fields (`var:City`, `if:isVip`) are told apart.
+  const labelText = control.alias || control.tag;
+  if (first && labelText) {
     const label = document.createElement('div');
     label.className = 'docx-content-control-label';
     label.dataset.docxMarker = '';
     label.setAttribute('contenteditable', 'false');
     label.setAttribute('aria-hidden', 'true');
-    label.textContent = control.alias;
+    if (!control.alias) label.dataset.source = 'tag';
+    label.textContent = labelText;
     label.style.position = 'absolute';
     label.style.left = `${(contentLeft + first.box.x) * scale}px`;
     // The box position scales; the OFFSET does not, and that is deliberate. The label is

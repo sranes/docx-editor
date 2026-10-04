@@ -7,13 +7,13 @@
   "baseGitCommitDate": "2026-08-24 14:45:47 +0200",
   "inventoryNote": "Kinds, reach, properties, chrome slots, and lifecycle sets are taken from the implementation after rebase onto origin/main. Main added replaceStoryBlocks, setMathEquation, removeMathEquation, and insertFragment (rich-clipboard-fidelity).",
   "counts": {
-    "treeDocOpKinds": 83,
-    "singlePartApply": 70,
+    "treeDocOpKinds": 84,
+    "singlePartApply": 73,
     "headerFooterLifecycle": 6,
     "noteLifecycle": 5,
-    "treeDocOpUnsupported": 2,
-    "chromeSlots": 69,
-    "chromeCommandWired": 39,
+    "treeDocOpUnsupported": 0,
+    "chromeSlots": 71,
+    "chromeCommandWired": 41,
     "chromeProbe": 6,
     "acceptedRunProperties": 19,
     "acceptedParagraphProperties": 12,
@@ -99,6 +99,9 @@
       "setTableCellVerticalAlignment",
       "setContentControlProperties",
       "insertContentControl",
+      "wrapBlocksInContentControl",
+      "addRepeatingSectionItem",
+      "removeRepeatingSectionItem",
       "insertFragment",
       "insertDrawing",
       "replaceDrawingResource",
@@ -135,7 +138,7 @@
       "convertAllNotes",
       "setNoteProperties"
     ],
-    "unsupported": ["addRepeatingSectionItem", "removeRepeatingSectionItem"]
+    "unsupported": []
   },
   "treeDocOpKinds": [
     "replaceStoryBlocks",
@@ -201,6 +204,7 @@
     "setNoteProperties",
     "setContentControlProperties",
     "insertContentControl",
+    "wrapBlocksInContentControl",
     "insertFragment",
     "insertDrawing",
     "replaceDrawingResource",
@@ -667,18 +671,18 @@
     },
     {
       "kind": "addRepeatingSectionItem",
-      "commitPath": "unsupported",
-      "storyScopes": [],
-      "storyParity": "n/a",
+      "commitPath": "applyTreeOp",
+      "storyScopes": ["body", "headerFooter", "notesPart"],
+      "storyParity": "same",
       "commandExposure": ["addRepeatingSectionItem"],
       "packageIntents": [],
       "openSpec": ["typed-content-controls"]
     },
     {
       "kind": "removeRepeatingSectionItem",
-      "commitPath": "unsupported",
-      "storyScopes": [],
-      "storyParity": "n/a",
+      "commitPath": "applyTreeOp",
+      "storyScopes": ["body", "headerFooter", "notesPart"],
+      "storyParity": "same",
       "commandExposure": ["removeRepeatingSectionItem"],
       "packageIntents": [],
       "openSpec": ["typed-content-controls"]
@@ -932,6 +936,16 @@
       "storyScopes": ["body", "headerFooter", "notesPart"],
       "storyParity": "same",
       "commandExposure": ["insertContentControl"],
+      "chromeSlots": ["insert.richTextControl", "insert.plainTextControl"],
+      "packageIntents": [],
+      "openSpec": ["typed-content-controls"]
+    },
+    {
+      "kind": "wrapBlocksInContentControl",
+      "commitPath": "applyTreeOp",
+      "storyScopes": ["body", "headerFooter", "notesPart"],
+      "storyParity": "same",
+      "commandExposure": ["automation"],
       "packageIntents": [],
       "openSpec": ["typed-content-controls"]
     },
@@ -1299,7 +1313,9 @@
       "insert.pageBreak",
       "insert.sectionBreakNextPage",
       "insert.sectionBreakContinuous",
-      "insert.toc"
+      "insert.toc",
+      "insert.richTextControl",
+      "insert.plainTextControl"
     ],
     "commandWired": [
       "history.undo",
@@ -1340,7 +1356,9 @@
       "insert.pageBreak",
       "insert.sectionBreakNextPage",
       "insert.sectionBreakContinuous",
-      "insert.toc"
+      "insert.toc",
+      "insert.richTextControl",
+      "insert.plainTextControl"
     ],
     "probe": [
       "text.link",
@@ -1377,13 +1395,6 @@
     ]
   },
   "unsupportedRows": [
-    {
-      "id": "repeating-section-item",
-      "kinds": ["addRepeatingSectionItem", "removeRepeatingSectionItem"],
-      "layer": "TreeDocOp",
-      "evidence": "validateTreeOp and applyTreeOp return unsupported.",
-      "openSpec": ["typed-content-controls"]
-    },
     {
       "id": "table-merge-split",
       "commands": ["mergeCells", "splitCell"],

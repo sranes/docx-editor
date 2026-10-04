@@ -353,6 +353,7 @@ const TREE_OP_REACH: {
   // like the range shape, and a caret at a control's EDGE lands outside that control, which is
   // exactly where the applier puts it.
   insertContentControl: (op) => over(op.paragraphId, op.start, op.end),
+  wrapBlocksInContentControl: (op) => ({ kind: 'nodes', targets: [{ nodeId: op.firstBlockId }] }),
   insertInlineContentControl: (op) => splittingControlAt(op.paragraphId, op.offset),
   insertFragment: (op) => siblingAt(op.paragraphId, op.offset),
   // A split at a control's edge moves the whole control to one side of the break and changes

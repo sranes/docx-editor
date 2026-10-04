@@ -13,7 +13,7 @@
   },
   "Word.SearchOptions#matchWildcards": {
     "status": "partial",
-    "notes": "The option compiles, but true is refused with NotSupported."
+    "notes": "Supports ?, *, [abc], [a-z], [!a-z], {n}, {n,}, {n,m}, @, <, > and \\x escapes, always case-sensitive like Word. Grouping, back references, ^ codes, more than four unbounded repeats, and matchWholeWord with wildcards refuse with NotSupported."
   },
   "Word.Range#select": {
     "status": "partial",
@@ -589,7 +589,7 @@
   },
   "Word.Range#insertContentControl": {
     "status": "partial",
-    "notes": "Creates RichText or PlainText over a supported single-paragraph span. Other control types, cross-paragraph targets, bound content, and protected structures refuse. The created proxy needs sync before configuration."
+    "notes": "Creates RichText or PlainText over a supported single-paragraph span, or a block-level RichText control over whole sibling paragraphs. Other control types, partial cross-paragraph targets, PlainText across paragraphs, bound content, and protected structures refuse. The created proxy needs sync before configuration."
   },
   "Word.ContentControl#tag": {
     "status": "partial",

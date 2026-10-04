@@ -455,7 +455,8 @@ describe('searching a story', () => {
     const runtime = await serverRuntime();
     const code = await codeOf(() =>
       runtime.run(async (context) => {
-        const found = context.document.body.search('alpha', { matchWildcards: true });
+        // Grouping is outside the supported wildcard subset.
+        const found = context.document.body.search('(alpha)', { matchWildcards: true });
         found.load();
         await context.sync();
       })

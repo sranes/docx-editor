@@ -71,6 +71,7 @@ export const TREE_DOC_OP_KINDS = [
   'setNoteProperties',
   'setContentControlProperties',
   'insertContentControl',
+  'wrapBlocksInContentControl',
   'insertFragment',
   'insertDrawing',
   'replaceDrawingResource',

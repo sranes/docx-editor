@@ -27,7 +27,13 @@ import { documentReads } from '../automation/reads.ts';
 // session, so operations answer `document-unavailable` — the host may well answer again after
 // the next `attach`.
 
-import type { AutomationCapabilities, AutomationHost } from '../automation/index.ts';
+import type {
+  AutomationBatchRequest,
+  AutomationCapabilities,
+  AutomationHost,
+} from '../automation/index.ts';
+import type { HistoryGroup } from '../contracts/editor.ts';
+import { runInHistoryGroup } from './editor-history-groups.ts';
 import { DEFAULT_FORMATTING_DISPLAY_MODE } from '../store/store/formattable-runs.ts';
 import type {
   AutomationCommentWrite,
@@ -81,6 +87,32 @@ function automationCommentIntent(
   return undefined;
 }
 
+/** Options for {@link createBrowserAutomationHost}. */
+export interface BrowserAutomationHostOptions {
+  /**
+   * An open group from `editor.beginHistoryGroup()`. Consecutive batches this host executes
+   * into the SAME story while the group is open join one undo step. Each story keeps its own
+   * undo history, so a batch into another story (a header after the body) starts a new step,
+   * and so does a batch that a package-level write splits from the group. After `group.end()`,
+   * every batch refuses with `unsupported-capability`: create a new host.
+   */
+  readonly historyGroup?: HistoryGroup;
+}
+
+/** The answer to a batch whose history group is closed: nothing applied. */
+function closedGroupRefusal(host: AutomationHost, request: AutomationBatchRequest) {
+  const error = {
+    code: 'unsupported-capability' as const,
+    message: 'the history group of this host is closed or belongs to another editor',
+  };
+  return {
+    ok: false,
+    changed: false,
+    revision: host.revision(),
+    results: request.operations.map(() => ({ status: 'error' as const, error })),
+  };
+}
+
 /**
  * An automation host over a live editor.
  *
@@ -91,7 +123,11 @@ function automationCommentIntent(
  * return `transaction-refused`. For autosaving from change callbacks, use the asynchronous
  * `editor.save()`, which waits for the active edit to finish.
  */
-export function createBrowserAutomationHost(editor: DocxEditorInstance): AutomationHost {
+export function createBrowserAutomationHost(
+  editor: DocxEditorInstance,
+  options: BrowserAutomationHostOptions = {}
+): AutomationHost {
+  const { historyGroup } = options;
   const host = createAutomationHost({
     port: sessionPort(editor),
     capabilities: BROWSER_AUTOMATION_CAPABILITIES,
@@ -129,7 +165,10 @@ export function createBrowserAutomationHost(editor: DocxEditorInstance): Automat
       // Nothing to settle for a batch that will be refused anyway: a disposed host must not
       // commit the editor's buffered keystrokes on its way to saying it is disposed.
       if (!disposed) editor.surface?.flushPendingInput();
-      return host.execute(request);
+      const surface = editor.surface;
+      if (historyGroup === undefined || disposed || !surface) return host.execute(request);
+      const grouped = runInHistoryGroup(historyGroup, surface, () => host.execute(request));
+      return grouped ? grouped.value : closedGroupRefusal(host, request);
     },
   };
 }
@@ -349,6 +388,16 @@ function sessionPort(editor: DocxEditorInstance): AutomationDocumentPort {
           head: { paragraphId: head.paragraphId, offset: head.offset },
         },
       });
+    },
+    selection() {
+      const surface = editor.surface;
+      // Body only, like `select`: a header or note selection has no body position to report.
+      if (!surface || surface.activeScope().kind !== 'body') return null;
+      const { anchor, head } = surface.state().selection;
+      return {
+        anchor: { paragraphId: anchor.paragraphId, offset: anchor.offset },
+        head: { paragraphId: head.paragraphId, offset: head.offset },
+      };
     },
     // The EDITOR's change event, not the session's: the facade re-subscribes to each new
     // session across a remount, so a subscription taken here survives one.

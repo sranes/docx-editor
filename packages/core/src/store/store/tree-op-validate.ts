@@ -95,6 +95,8 @@ import {
 import { validateRefreshFieldResults } from './tree-op-field-results.ts';
 import { validateInsertTable } from './tree-op-insert-table.ts';
 import { validateReplaceStoryBlocks } from './tree-op-story-replace.ts';
+import { validateWrapBlocks } from './tree-op-content-control-wrap.ts';
+import { validateRepeatingSectionOp } from './tree-op-repeating-section.ts';
 import {
   ACCEPTED_PARAGRAPH_PROPERTIES,
   ACCEPTED_RUN_PROPERTIES,
@@ -321,6 +323,7 @@ export function validateTreeOp(part: OoxmlPart, op: TreeDocOp): TreeOpRejection 
     }
     return null;
   }
+  if (op.op === 'wrapBlocksInContentControl') return validateWrapBlocks(part, op);
   if (op.op === 'insertContentControl') {
     if (!INSERTABLE_CONTENT_CONTROL_TYPES.includes(op.type)) return 'invalidArgs';
     for (const value of [op.tag, op.alias]) {
@@ -397,7 +400,7 @@ export function validateTreeOp(part: OoxmlPart, op: TreeDocOp): TreeOpRejection 
   }
 
   if (op.op === 'addRepeatingSectionItem' || op.op === 'removeRepeatingSectionItem') {
-    return 'unsupported';
+    return validateRepeatingSectionOp(part, op);
   }
 
   if (op.op === 'setContentControlValue') {

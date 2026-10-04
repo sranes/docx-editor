@@ -131,6 +131,8 @@ const EXPECTED_SLOTS: readonly ChromeSlotId[] = [
   'insert.sectionBreakNextPage',
   'insert.sectionBreakContinuous',
   'insert.toc',
+  'insert.richTextControl',
+  'insert.plainTextControl',
 ];
 
 const allSlots = (): ChromeSlotId[] =>
@@ -314,7 +316,7 @@ describe('legacy chrome descriptor', () => {
   });
 
   test('the count is stable, so a dropped control fails rather than passing quietly', () => {
-    expect(chromeControlCount()).toBe(69);
+    expect(chromeControlCount()).toBe(71);
   });
 
   test('the table group is contextual and carries border/fill chrome slots', () => {

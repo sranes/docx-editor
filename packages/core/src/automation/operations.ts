@@ -163,6 +163,11 @@ export type AutomationOperation =
       readonly author?: string;
     }
   /** The document itself — the root every other handle is reached through. */
+  /**
+   * The reader's current selection in the body, as a span (start before end). Needs the
+   * `selection` capability; a selection outside the body refuses with `invalid-offset`.
+   */
+  | { readonly op: 'getSelection' }
   | { readonly op: 'getDocument' }
   /** The main story of a document. */
   | { readonly op: 'getBody'; readonly document: AutomationHandle }
@@ -732,6 +737,21 @@ export type AutomationOperation =
       readonly keepContent: boolean;
     }
   /**
+   * Add a copy of a repeating section's item at `index` (default: the last) right after it,
+   * like Word's "+". Fresh ids; bookmarks are not copied. Solitary in its batch.
+   */
+  | {
+      readonly op: 'addRepeatingSectionItem';
+      readonly contentControl: AutomationHandle;
+      readonly index?: number;
+    }
+  /** Remove a repeating section's item at `index`. The last item refuses. Solitary. */
+  | {
+      readonly op: 'removeRepeatingSectionItem';
+      readonly contentControl: AutomationHandle;
+      readonly index: number;
+    }
+  /**
    * Put text into the control, at `replace` (its value) or at one edge of its content.
    *
    * The edge is resolved HERE and not by the caller: a script that read the span first and wrote
@@ -812,184 +832,10 @@ export interface AutomationCustomNodePayload {
 /** Just the `op` discriminants of {@link AutomationOperation}, for dispatch tables. */
 export type AutomationOperationKind = AutomationOperation['op'];
 
-/** Operations that read. They never open a transaction. */
-export const AUTOMATION_QUERY_OPERATIONS = [
-  'getTables',
-  'getTable',
-  'getTableRows',
-  'getTableCells',
-  'getTableCell',
-  'getTableCellProperties',
-  'getTableCellBody',
-  'getFields',
-  'getField',
-  'getInlinePictures',
-  'getInlinePicture',
-  'getChangeTrackingMode',
-  'getDocument',
-  'getBody',
-  'getParagraphs',
-  'getRange',
-  'getSpanParagraphs',
-  'getText',
-  'getSpanText',
-  'getParagraphId',
-  'search',
-  'getFont',
-  'getParagraphFormat',
-  'getStyle',
-  'getSections',
-  'getPageSetup',
-  'getFurniture',
-  'getNotes',
-  'getNoteBody',
-  'getNoteText',
-  'getNoteKind',
-  'getLists',
-  'getListId',
-  'getListById',
-  'getListParagraphs',
-  'getParagraphList',
-  'getListLevel',
-  'getHyperlink',
-  'getBookmarks',
-  'getBookmarkName',
-  'getBookmarkRange',
-  'getComments',
-  'getCommentReplies',
-  'getCommentId',
-  'getCommentAuthor',
-  'getCommentDate',
-  'getCommentText',
-  'getCommentRange',
-  'getCommentResolved',
-  'getRevisions',
-  'getRevisionType',
-  'getRevisionAuthor',
-  'getRevisionDate',
-  'getRevisionRange',
-  'getContentControls',
-  'getContentControlById',
-  'getContentControlsByTag',
-  'getContentControlsByTitle',
-  'getContentControlTag',
-  'getContentControlTitle',
-  'getContentControlFileId',
-  'getContentControlSubtype',
-  'getContentControlLock',
-  'getContentControlIsBound',
-  'getContentControlPlaceholderShown',
-  'getContentControlTemporary',
-  'getContentControlText',
-  'getContentControlParagraphs',
-  'getContentControlRange',
-] as const satisfies readonly AutomationOperationKind[];
-
-/** Operations that write. Every one of these goes through the single transaction path. */
-export const AUTOMATION_COMMAND_OPERATIONS = [
-  'insertTable',
-  'updateTable',
-  'updateTableCell',
-  'setInlinePicture',
-  'deleteInlinePicture',
-  'insertField',
-  'setFieldCode',
-  'deleteField',
-  'updateFieldResult',
-  'insertInlinePicture',
-  'insertBreak',
-  'setChangeTrackingMode',
-  'proposeInsertion',
-  'proposeDeletion',
-  'proposeReplacement',
-  'insertText',
-  'replaceSpan',
-  'replaceStoryBlocks',
-  'insertParagraph',
-  'splitParagraph',
-  'deleteParagraph',
-  'selectSpan',
-  'selectBookmark',
-  'setFont',
-  'setParagraphFormat',
-  'setStyle',
-  'setPageSetup',
-  'deleteNote',
-  'setListLevel',
-  'startNewList',
-  'attachToList',
-  'detachFromList',
-  'setListLevelFormat',
-  'insertListParagraph',
-  'setHyperlink',
-  'insertComment',
-  'setCommentResolved',
-  'replyToComment',
-  'deleteComment',
-  'acceptRevision',
-  'rejectRevision',
-  'resolveRevisionBatch',
-  'acceptAllRevisions',
-  'rejectAllRevisions',
-  'setContentControlValue',
-  'setContentControlProperties',
-  'deleteContentControl',
-  'insertContentControlText',
-  'insertContentControl',
-  'insertCustomNode',
-] as const satisfies readonly AutomationOperationKind[];
-
-/**
- * Commands that commit as a PACKAGE transaction and therefore share a batch with nothing.
- *
- * A note's lifecycle rewrites several parts at once — the notes part, the references in every
- * story that cited it, the relationship and the content-type override — and the store publishes
- * that as its own undo unit rather than as ops inside a story transaction. Two of them, or one
- * beside a story command, would be two commits: two revisions, and a moment where half the
- * caller's batch is published. Refused while planning instead.
- */
-export const AUTOMATION_SOLITARY_OPERATIONS = [
-  'resolveRevisionBatch',
-  'insertTable',
-  'insertInlinePicture',
-  'insertBreak',
-  'startNewList',
-  'deleteNote',
-  'insertComment',
-  'setCommentResolved',
-  'replyToComment',
-  // A payload write is a package transaction of its own — the data part, the node inside it and
-  // the body's control — so it shares a batch with nothing, for the same reason a reply does not.
-  'insertCustomNode',
-] as const satisfies readonly AutomationOperationKind[];
-
-const SOLITARY: ReadonlySet<string> = new Set(AUTOMATION_SOLITARY_OPERATIONS);
-
-/** Whether an operation must be the only one in its batch. */
-export function isSolitaryAutomationCommand(operation: AutomationOperation): boolean {
-  return (
-    SOLITARY.has(operation.op) ||
-    (operation.op === 'updateTable' &&
-      ['addRows', 'addColumns', 'deleteRows', 'deleteColumns', 'delete'].includes(
-        operation.mutation.kind
-      ))
-  );
-}
-
-// Compile-time exhaustiveness: a new operation must be classified as a query or a command, or
-// this fails to typecheck. Without it a new operation would default to "not a command" and
-// silently skip the transaction path.
-type _Unclassified = Exclude<
-  AutomationOperationKind,
-  (typeof AUTOMATION_QUERY_OPERATIONS)[number] | (typeof AUTOMATION_COMMAND_OPERATIONS)[number]
->;
-const _operationsClassified: _Unclassified extends never ? true : ['unclassified', _Unclassified] =
-  true;
-void _operationsClassified;
-
-const COMMANDS: ReadonlySet<string> = new Set(AUTOMATION_COMMAND_OPERATIONS);
-
-/** Whether an operation writes. Drives the query/command split inside one batch. */
-export function isAutomationCommand(operation: AutomationOperation): boolean {
-  return COMMANDS.has(operation.op);
-}
+export {
+  AUTOMATION_COMMAND_OPERATIONS,
+  AUTOMATION_QUERY_OPERATIONS,
+  AUTOMATION_SOLITARY_OPERATIONS,
+  isAutomationCommand,
+  isSolitaryAutomationCommand,
+} from './operation-kinds.ts';

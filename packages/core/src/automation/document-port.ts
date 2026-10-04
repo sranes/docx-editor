@@ -206,6 +206,11 @@ export interface AutomationDocumentPort {
     },
     mode: 'select' | 'start' | 'end'
   ): void;
+  /**
+   * The reader's selection in the body, or null when there is none or it is in another story.
+   * OPTIONAL, like `select`: a headless host omits it.
+   */
+  selection?(): import('./plan-selection.ts').AutomationPortSelection | null;
   /** Fires once per committed change. */
   subscribe(listener: () => void): () => void;
   /** Release what the port holds. Idempotent. */

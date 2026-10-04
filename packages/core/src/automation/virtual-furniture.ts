@@ -12,9 +12,39 @@ const refuse = (message: string): PlannedOperation => ({
   error: { code: 'unsupported-content', message },
 });
 
+/** The body a whole-story `{ body }` scope or span names. */
+function wholeBody(ref: unknown): AutomationHandle | undefined {
+  return typeof ref === 'object' && ref !== null && 'body' in ref
+    ? ((ref as { body: AutomationHandle }).body ?? undefined)
+    : undefined;
+}
+
+/**
+ * Reads that answer "nothing" for an empty story. A missing header or footer IS an empty story
+ * until its first write, so these reads answer the same empty value rather than refusing a
+ * handle that `getFurniture` minted and `getText` already reads.
+ */
+const EMPTY_STORY_READS = {
+  search: { kind: 'spans', spans: [] },
+  getSpanText: { kind: 'text', text: '' },
+  getContentControls: { kind: 'handles', handles: [] },
+  getContentControlsByTag: { kind: 'handles', handles: [] },
+  getContentControlsByTitle: { kind: 'handles', handles: [] },
+  getTables: { kind: 'handles', handles: [] },
+  getFields: { kind: 'handles', handles: [] },
+  getInlinePictures: { kind: 'handles', handles: [] },
+  getBookmarks: { kind: 'handles', handles: [] },
+  getComments: { kind: 'handles', handles: [] },
+  getRevisions: { kind: 'handles', handles: [] },
+  getSpanParagraphs: { kind: 'handles', handles: [] },
+} as const;
+
 function bodyHandle(operation: AutomationOperation): AutomationHandle | undefined {
   if (operation.op === 'getText') return operation.target;
   if ('body' in operation) return operation.body as AutomationHandle;
+  if ('scope' in operation) return wholeBody(operation.scope);
+  if ('span' in operation && (operation.op in EMPTY_STORY_READS || operation.op === 'getRange'))
+    return wholeBody(operation.span);
   if (operation.op === 'insertText' && 'body' in operation.at) return operation.at.body;
   if (operation.op === 'replaceSpan' && 'body' in operation.span) return operation.span.body;
   if (operation.op === 'insertParagraph' && 'body' in operation.anchor)
@@ -45,6 +75,15 @@ export function planVirtualFurniture(
     return { ok: true, kind: 'query', value: { kind: 'text', text: '' } };
   if (operation.op === 'getParagraphs' || operation.op === 'getLists')
     return { ok: true, kind: 'query', value: { kind: 'handles', handles: [] } };
+  // The same refusal an empty declared story gives: there is no place to name.
+  if (operation.op === 'getRange')
+    return { ok: false, error: { code: 'invalid-offset', message: 'empty story' } };
+  if (operation.op in EMPTY_STORY_READS)
+    return {
+      ok: true,
+      kind: 'query',
+      value: EMPTY_STORY_READS[operation.op as keyof typeof EMPTY_STORY_READS],
+    };
   if (
     operation.op !== 'insertText' &&
     operation.op !== 'replaceSpan' &&

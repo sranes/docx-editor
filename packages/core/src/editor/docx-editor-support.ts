@@ -22,6 +22,7 @@ import {
 import { isDocAnchor, isDocAnchorRange } from './anchor-resolution.ts';
 import { blankDocumentBytes } from './blank-document.ts';
 import { tableCommandCanSupport } from './table-command-plan.ts';
+import { checkVariables } from './variables-check.ts';
 
 /** Recursively freeze plain objects and arrays (idempotent). */
 export function deepFreezeValue<T>(value: T): T {
@@ -875,6 +876,12 @@ export function classifyCommand(command: EditorCommand): CommandSupport {
       return { supported: true, mutating: true };
     case 'setImageProperties':
       return { supported: true, mutating: true };
+    case 'applyVariables': {
+      const checked = checkVariables(command.values);
+      return checked.ok
+        ? { supported: true, mutating: true }
+        : { supported: false, code: 'invalidArgs', reason: checked.reason };
+    }
     default:
       return {
         supported: false,

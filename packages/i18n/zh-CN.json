@@ -47,7 +47,9 @@
     "exportMarkdownFailed": null,
     "exportPdfFailed": null,
     "exportingMarkdown": null,
-    "exportingPdf": null
+    "exportingPdf": null,
+    "plainTextControl": null,
+    "richTextControl": null
   },
   "formattingBar": {
     "groups": {

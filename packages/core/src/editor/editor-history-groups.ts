@@ -21,6 +21,23 @@ const GROUPABLE = new Set<EditorCommand['type']>([
   'setParagraphStyle',
   'setParagraphFormat',
 ]);
+/** Which manager minted a handle, so a caller holding only the handle can run inside it. */
+const MANAGERS = new WeakMap<HistoryGroup, EditorHistoryGroups>();
+
+/**
+ * Run an automation batch inside `group`, so its commit joins the gesture's undo step.
+ *
+ * Answers `null` without running when `group` is not an open handle from a live editor, so
+ * the caller refuses the batch rather than committing it as an undo step of its own.
+ */
+export function runInHistoryGroup<T>(
+  group: HistoryGroup,
+  owner: object,
+  run: () => T
+): { readonly value: T } | null {
+  return MANAGERS.get(group)?.runBatch(group, owner, run) ?? null;
+}
+
 interface GroupRecord {
   readonly token: symbol;
   owner: WeakRef<object> | undefined;
@@ -65,7 +82,31 @@ export class EditorHistoryGroups {
     };
     const handle = createHandle(record, new WeakRef(this));
     this.records.set(handle, record);
+    MANAGERS.set(handle, this);
     return handle;
+  }
+
+  /**
+   * Binds an open group around one automation batch. Unlike {@link gate}, any command kind
+   * may join: a batch that promotes to a package unit reports a split in the store and starts
+   * its own step, which is the same boundary an ungrouped batch has.
+   */
+  runBatch<T>(group: HistoryGroup, owner: object, run: () => T): { readonly value: T } | null {
+    const record = this.records.get(group);
+    if (!record || group.state !== 'open') return null;
+    let captured = false;
+    const value = observeHistoryGroup(
+      record.token,
+      () => {
+        captured = true;
+      },
+      () => runWithHistoryGroup(owner, record.token, run)
+    );
+    if (captured) {
+      record.committed = true;
+      record.undoEpoch = this.undoEpoch;
+    }
+    return { value };
   }
 
   owns(owner: object | undefined): boolean {

@@ -15,6 +15,7 @@ import type { TreeDocOp } from '@docx-editor.dev/core/store';
 import { isDocAnchor, resolveDocAnchor } from './anchor-resolution.ts';
 import type { PaginatedSurface } from './paginated-surface-contract.ts';
 import { selectionMarkOf } from './surface-selection-ops.ts';
+import { wholeParagraphSelection } from './content-control-blocks.ts';
 
 /** The editor-facing command. `target` defaults to the selection, like every editor command. */
 export interface InsertContentControlCommand {
@@ -149,12 +150,27 @@ export function resolveContentControlInsertion(
   let span: Span;
   if (command.target === undefined) {
     const mark = selectionMarkOf(surface.state().selection);
-    // `selectionMarkOf` answers null exactly when the selection crosses paragraphs.
+    // `selectionMarkOf` answers null exactly when the selection crosses paragraphs. Whole
+    // paragraphs in the body make a BLOCK rich text control; anything else refuses.
     if (!mark) {
+      const blocks = type === 'richText' ? wholeParagraphSelection(surface) : null;
+      if (!blocks) {
+        return {
+          ok: false,
+          code: 'unsupported',
+          reason:
+            'a content control over several paragraphs must be rich text and cover whole body paragraphs',
+        };
+      }
       return {
-        ok: false,
-        code: 'unsupported',
-        reason: 'wrapping several paragraphs in one content control is not supported',
+        ok: true,
+        span: { paragraphId: blocks.firstBlockId, start: 0, end: 0 },
+        op: {
+          op: 'wrapBlocksInContentControl',
+          ...blocks,
+          ...(command.tag === undefined ? {} : { tag: command.tag }),
+          ...(command.title === undefined ? {} : { alias: command.title }),
+        },
       };
     }
     span = mark;

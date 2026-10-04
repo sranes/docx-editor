@@ -134,7 +134,7 @@ describe('authorable mutation manifest freeze (task 0.5)', () => {
     expect(unclassified).toEqual([]);
   });
 
-  test('repeating-section kinds stay unsupported on validate and apply', () => {
+  test('kinds frozen as unsupported refuse on validate and apply', () => {
     const part = dummyPart();
     for (const kind of manifest.applyPathSets.unsupported) {
       const op = { op: kind, controlId: 'missing' } as TreeDocOp;

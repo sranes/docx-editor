@@ -462,7 +462,7 @@ describe('searching a story', () => {
   test('refuses a search option it cannot honour instead of ignoring it', () => {
     const host = open(docx(p('alpha')));
     const { body } = roots(host);
-    for (const option of ['matchWildcards', 'ignorePunct', 'ignoreSpace'] as const) {
+    for (const option of ['ignorePunct', 'ignoreSpace'] as const) {
       const response = host.execute({
         operations: [{ op: 'search', scope: { body }, text: 'alpha', options: { [option]: true } }],
       });

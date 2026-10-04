@@ -31,9 +31,10 @@ const found = await runtime.run(async (context) => {
 | --- | --- |
 | `matchCase` | Case-sensitive matching when `true` |
 | `matchWholeWord` | Whole-word matching when `true` |
-| `ignorePunct`, `ignoreSpace`, `matchWildcards` | Setting any of these to `true` fails with `NotSupported` |
+| `matchWildcards` | Word wildcard matching, always case-sensitive. Supports `?`, `*`, `[abc]`, `[a-z]`, `[!a-z]`, `{n}`, `{n,}`, `{n,m}`, `@`, `<`, `>`, and `\` escapes. Grouping, back references, `^` codes, more than four unbounded repeats, and combining it with `matchWholeWord` fail with `NotSupported` |
+| `ignorePunct`, `ignoreSpace` | Setting either of these to `true` fails with `NotSupported` |
 
-Search matches plain text; regular expressions are unsupported. Use nonempty search text and handle unsupported text boundaries explicitly. Search follows the runtime's `revisionTextView`, including its treatment of pending insertions and deletions. Cached field result text can appear in ordinary text reads and searches. A search result is not permission to replace protected field or revision structure.
+Without `matchWildcards`, search matches plain text. Regular expressions are unsupported. Use nonempty search text and handle unsupported text boundaries explicitly. Search follows the runtime's `revisionTextView`, including its treatment of pending insertions and deletions. Cached field result text can appear in ordinary text reads and searches. A search result is not permission to replace protected field or revision structure.
 
 `RangeCollection` exposes `items`, `getFirst()`, `getLast()`, and `getFirstOrNullObject()`. A non-null accessor fails with `ItemNotFound` when no match exists. After `sync()`, check `isNullObject` before reading a nullable result. See [Batching, loading, and errors](/docs/2.x/editor-api/batching-and-errors) for object lifetimes.
 
