@@ -258,7 +258,9 @@ jobs:
           overwrite: true
 
   collaboration:
-    if: github.actor != 'dependabot[bot]'
+    # Upstream only. The catalog lists releases published from eigenpal/docx-editor, so a copy
+    # of the repository falls behind it with every upstream release and fails here.
+    if: github.repository == 'eigenpal/docx-editor' && github.actor != 'dependabot[bot]'
     needs: checks
     strategy:
       fail-fast: false
@@ -332,7 +334,15 @@ jobs:
         env:
           RESULT: ${{ needs.checks.result }}
           COLLABORATION_RESULT: ${{ needs.collaboration.result }}
-        run: test "$RESULT" = success && test "$COLLABORATION_RESULT" = success
+          IS_UPSTREAM: ${{ github.repository == 'eigenpal/docx-editor' }}
+        # Outside upstream the collaboration lane is skipped by design; upstream it must pass.
+        run: |
+          test "$RESULT" = success
+          if [ "$IS_UPSTREAM" = true ]; then
+            test "$COLLABORATION_RESULT" = success
+          else
+            test "$COLLABORATION_RESULT" = skipped
+          fi
 
   package-size:
     if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
