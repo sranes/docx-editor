@@ -82,7 +82,21 @@ jobs:
         if: "matrix.check == 'lint'"
       - name: Type check
         if: "matrix.check == 'typecheck'"
-        run: bun run typecheck
+        # Four packages at a time. `bun run typecheck` starts all seventeen at once, and
+        # each one loads the core sources, which exhausts a 16 GB GitHub-hosted runner.
+        run: |
+          node -e '
+            const fs = require("fs"), path = require("path").posix;
+            for (const pattern of require("./package.json").workspaces) {
+              const dirs = pattern.endsWith("/*")
+                ? fs.readdirSync(pattern.slice(0, -2)).map((d) => path.join(pattern.slice(0, -2), d))
+                : [pattern];
+              for (const dir of dirs) {
+                const file = path.join(dir, "package.json");
+                if (fs.existsSync(file) && require("./" + file).scripts?.typecheck) console.log(dir);
+              }
+            }
+          ' | xargs -P 4 -I{} sh -c 'cd "{}" && bun run typecheck'
       - name: i18n locale + typed-exports sync check
         if: "matrix.check == 'typecheck'"
         run: bun run i18n:validate
