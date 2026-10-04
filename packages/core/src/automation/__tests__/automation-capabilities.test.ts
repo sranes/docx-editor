@@ -242,6 +242,8 @@ describe('the operation vocabulary declares which operations write', () => {
       'setContentControlValue',
       'setContentControlProperties',
       'deleteContentControl',
+      'addRepeatingSectionItem',
+      'removeRepeatingSectionItem',
       'insertContentControlText',
       'insertContentControl',
       'insertCustomNode',
@@ -257,6 +259,8 @@ describe('the operation vocabulary declares which operations write', () => {
       'insertComment',
       'setCommentResolved',
       'replyToComment',
+      'addRepeatingSectionItem',
+      'removeRepeatingSectionItem',
       'insertCustomNode',
     ]);
     expect(

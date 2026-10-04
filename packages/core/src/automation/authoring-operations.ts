@@ -5,8 +5,26 @@ import type { AutomationHandle } from './protocol.ts';
 export type AutomationAuthoringOperation =
   | { readonly op: 'getFields'; readonly span: AutomationSpanRef }
   | {
-      readonly op: 'getField' | 'deleteField' | 'updateFieldResult';
+      readonly op: 'getField' | 'deleteField';
       readonly field: AutomationHandle;
+    }
+  /**
+   * The span the whole field occupies: code and cached result, as one model position.
+   *
+   * A field is atomic in the model, so this is the range a caller replaces or deletes to
+   * remove the field. Its cached result is not separately addressable.
+   */
+  | { readonly op: 'getFieldRange'; readonly field: AutomationHandle }
+  /**
+   * Recompute a field's cached result.
+   *
+   * `PAGE` and `NUMPAGES` evaluate from the host's pagination. `MERGEFIELD` evaluates from
+   * `values`, keyed by field name; a missing value refuses. Every other field refuses.
+   */
+  | {
+      readonly op: 'updateFieldResult';
+      readonly field: AutomationHandle;
+      readonly values?: Readonly<Record<string, string>>;
     }
   | { readonly op: 'setFieldCode'; readonly field: AutomationHandle; readonly code: string }
   | {

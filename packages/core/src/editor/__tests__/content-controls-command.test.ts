@@ -369,7 +369,7 @@ describe('insertContentControl command', () => {
     expect(editor.query({ type: 'contentControls' })).toHaveLength(1);
   });
 
-  test('refuses a selection that crosses paragraphs', () => {
+  test('refuses a selection that cuts paragraphs mid-text', () => {
     const editor = mount(p('first') + p('second'));
     const ids = editor.surface!.session.paragraphIds();
     editor.surface!.setSelection({
@@ -382,10 +382,47 @@ describe('insertContentControl command', () => {
     expect(can).toEqual({
       ok: false,
       code: 'unsupported',
-      reason: 'wrapping several paragraphs in one content control is not supported',
+      reason:
+        'a content control over several paragraphs must be rich text and cover whole body paragraphs',
     });
     expect(editor.exec(command)).toEqual(can);
     expect(editor.query({ type: 'contentControls' })).toHaveLength(0);
+  });
+
+  test('a selection of whole paragraphs makes one block control around them', () => {
+    const editor = mount(p('first') + p('second') + p('third'));
+    const ids = editor.surface!.session.paragraphIds();
+    // Backwards, from the start of "third" to the start of "first": the mark of "second" is in.
+    editor.surface!.setSelection({
+      anchor: { paragraphId: ids[2]!, offset: 0 },
+      head: { paragraphId: ids[0]!, offset: 0 },
+    });
+    const command = {
+      type: 'insertContentControl' as const,
+      subtype: 'richText' as const,
+      tag: 'if:rule',
+    };
+    expect(editor.can(command)).toEqual({ ok: true });
+    expect(editor.exec(command)).toMatchObject({ ok: true, changed: true });
+    expect(editor.query({ type: 'contentControls' })).toHaveLength(1);
+    expect(editor.query({ type: 'paragraphs' }).map((paragraph) => paragraph.text)).toEqual([
+      'first',
+      'second',
+      'third',
+    ]);
+  });
+
+  test('plain text over whole paragraphs refuses: a block control here is rich text', () => {
+    const editor = mount(p('first') + p('second'));
+    const ids = editor.surface!.session.paragraphIds();
+    editor.surface!.setSelection({
+      anchor: { paragraphId: ids[0]!, offset: 0 },
+      head: { paragraphId: ids[1]!, offset: 6 },
+    });
+    expect(editor.exec({ type: 'insertContentControl', subtype: 'plainText' })).toMatchObject({
+      ok: false,
+      code: 'unsupported',
+    });
   });
 
   // `picture` and `repeatingSection` are real `ContentControlType` values a reader returns, so

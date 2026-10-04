@@ -1,9 +1,11 @@
 // Row insertion and deletion for canonical tables (table-editing task 3).
 //
-// Validates complete targets before mutation, copies only safe row/cell property skeletons,
+// Validates complete targets before mutation, copies only safe row/cell property skeletons plus
+// the first paragraph's formatting (see `tree-op-table-row-formatting.ts`),
 // and publishes one flow-structural effect per operation. A row inserted inside a vertical
 // merge repeats `w:vMerge` for the covered cells, so the merge grows by one row.
 
+import { inheritedCellFormatting } from './tree-op-table-row-formatting.ts';
 import {
   createNodeIdAllocator,
   insertChildren,
@@ -518,6 +520,7 @@ function planRowInsertion(
     structureBudget += 2;
     const tcPr = wmlChildNamed(cells[index]!, 'tcPr');
     if (tcPr) structureBudget += countAllowlistedLeaves(tcPr, SAFE_TCPR_LEAVES);
+    structureBudget += inheritedCellFormatting(cells[index]!, () => '').size;
     // A continued merge adds `w:vMerge`, plus a `w:tcPr` to carry it whenever the copy has
     // none — including a source `w:tcPr` whose every leaf is stripped. Budget the ceiling.
     if (continuations.has(index)) structureBudget += 2;
@@ -589,7 +592,11 @@ function buildFreshCell(
     : copiedTcPr;
   const children: OoxmlNode[] = [];
   if (finalTcPr) children.push(finalTcPr);
-  children.push(emptyParagraph(part, targetTable, nextId, `${seed}:p`, used, wml));
+  const paragraph = emptyParagraph(part, targetTable, nextId, `${seed}:p`, used, wml);
+  const inherited = inheritedCellFormatting(sourceCell, nextId).children;
+  children.push(
+    inherited.length ? ({ ...paragraph, children: inherited } as OoxmlParagraphNode) : paragraph
+  );
   return freshTableCell(nextId, children, wml);
 }
 

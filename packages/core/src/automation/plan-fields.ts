@@ -11,7 +11,9 @@ import {
   fieldInsertionParagraph,
   supportedPageFieldCode,
   type AutomationFieldPageContext,
+  type AutomationFieldRead,
 } from './fields.ts';
+import { mergeFieldResult, parseMergeField } from './merge-field.ts';
 
 type FieldOperation = Extract<
   AutomationOperation,
@@ -19,6 +21,7 @@ type FieldOperation = Extract<
     op:
       | 'getFields'
       | 'getField'
+      | 'getFieldRange'
       | 'setFieldCode'
       | 'deleteField'
       | 'updateFieldResult'
@@ -29,6 +32,30 @@ const refuse = (
   message: string,
   code: 'unsupported-content' | 'invalid-handle' | 'unsupported-capability' = 'unsupported-content'
 ): PlannedOperation => ({ ok: false, error: { code, message } });
+
+/** The cached result a MERGEFIELD shows for `values`, or the refusal that explains why not. */
+function mergeFieldUpdate(
+  field: AutomationFieldRead,
+  values: Readonly<Record<string, string>> | undefined
+): { ok: true; text: string } | { ok: false; refusal: PlannedOperation } {
+  const parsed = parseMergeField(field.code);
+  if (!parsed.ok) return { ok: false, refusal: refuse(parsed.reason, 'unsupported-capability') };
+  if (!field.rewritable)
+    return {
+      ok: false,
+      refusal: refuse('this field result cannot be rewritten', 'unsupported-capability'),
+    };
+  // `values` is caller data: read only its own keys, so `__proto__` or `constructor` never
+  // resolve to an inherited member.
+  const name = parsed.field.name;
+  const value =
+    values !== undefined && typeof values === 'object' && Object.hasOwn(values, name)
+      ? values[name]
+      : undefined;
+  if (typeof value !== 'string')
+    return { ok: false, refusal: refuse(`no merge value for ${name}`, 'unsupported-content') };
+  return { ok: true, text: mergeFieldResult(parsed.field, value) };
+}
 
 export function planFields(
   operation: FieldOperation,
@@ -137,6 +164,17 @@ export function planFields(
     return refuse('that field no longer exists', 'invalid-handle');
   if (operation.op === 'getField')
     return { ok: true, kind: 'query', value: { kind: 'field', field: { code: field.code } } };
+  if (operation.op === 'getFieldRange') {
+    const paragraph = handles.paragraph(target.paragraphId, story.story);
+    return {
+      ok: true,
+      kind: 'query',
+      value: {
+        kind: 'span',
+        span: { start: { paragraph, offset: field.start }, end: { paragraph, offset: field.end } },
+      },
+    };
+  }
   if (
     field.locked ||
     effectiveContentLockAt(story.part, target.fieldNodeId).content ||
@@ -146,6 +184,7 @@ export function planFields(
   const conflict = claim(story, target.paragraphId, operation.op === 'updateFieldResult');
   if (conflict) return conflict;
   const ops: TreeDocOp[] = [];
+  const values = operation.op === 'updateFieldResult' ? operation.values : undefined;
   if (operation.op === 'deleteField')
     ops.push({
       op: 'deleteText',
@@ -162,7 +201,18 @@ export function planFields(
       fieldNodeId: target.fieldNodeId,
       code: operation.code,
     });
+  } else if (/^\s*MERGEFIELD\b/i.test(field.code)) {
+    const merge = mergeFieldUpdate(field, values);
+    if (!merge.ok) return merge.refusal;
+    ops.push({
+      op: 'refreshFieldResults',
+      updates: [
+        { paragraphId: target.paragraphId, fieldNodeId: target.fieldNodeId, text: merge.text },
+      ],
+    });
   } else {
+    if (values !== undefined)
+      return refuse('values apply to MERGEFIELD fields only', 'unsupported-capability');
     const kind = supportedPageFieldCode(field.code);
     if (!kind || !field.rewritable)
       return refuse('this field result cannot be evaluated', 'unsupported-capability');

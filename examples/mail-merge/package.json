@@ -1,0 +1,25 @@
+{
+  "name": "docx-editor-example-mail-merge",
+  "private": true,
+  "type": "module",
+  "description": "Mail merge sample over @docx-editor.dev/core and @docx-editor.dev/react only.",
+  "scripts": {
+    "dev": "vite --port 5181",
+    "build": "vite build",
+    "verify": "bun scripts/verify-merge.ts"
+  },
+  "dependencies": {
+    "@docx-editor.dev/core": "workspace:*",
+    "@docx-editor.dev/react": "workspace:*",
+    "fflate": "^0.8.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.1",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.10"
+  }
+}

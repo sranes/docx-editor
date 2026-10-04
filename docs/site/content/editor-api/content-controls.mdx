@@ -63,7 +63,7 @@ The runtime combines lock assignments on the same proxy. Changing one lock prese
 
 ## Create a text control
 
-`Range.insertContentControl(type?)` supports `RichText` and `PlainText`; the default is `RichText`. The range must be an eligible single-paragraph span. Sync creation before setting metadata:
+`Range.insertContentControl(type?)` supports `RichText` and `PlainText`; the default is `RichText`. A range inside one paragraph makes an inline control. A range that covers whole paragraphs makes a block-level `RichText` control around them. A range that crosses a paragraph mark mid-text is refused. Sync creation before setting metadata:
 
 ```ts
 await runtime.run(async (context) => {

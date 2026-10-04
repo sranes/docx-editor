@@ -35,6 +35,7 @@ import {
 import { isTableEditorCommand, planTableCommand } from './table-command-plan.ts';
 import { execImageCommand, isImageCommand } from './docx-editor-images.ts';
 import { lineSpacingAttributes, spacingSideAttributes } from './paragraph-format-write.ts';
+import { execApplyVariables } from './docx-editor-variables.ts';
 
 /**
  * Run one admitted command against the surface.
@@ -380,6 +381,8 @@ export function execEditorCommand(
       }
       break;
     }
+    case 'applyVariables':
+      return execApplyVariables(mounted, command.values);
     case 'undo':
       mounted.undo();
       break;

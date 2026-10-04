@@ -646,6 +646,20 @@ export const CHROME_GROUPS = [
         paths: GENERATED_ICON_PATHS['toc'],
         state: { kind: 'command' },
       },
+      {
+        // Word's Developer tab controls: a caret inserts an empty control showing its prompt,
+        // a selection is wrapped, and whole paragraphs make a block rich text control.
+        id: 'richTextControl',
+        labelKey: 'toolbar.richTextControl',
+        paths: GENERATED_ICON_PATHS['edit_note'],
+        state: { kind: 'command' },
+      },
+      {
+        id: 'plainTextControl',
+        labelKey: 'toolbar.plainTextControl',
+        paths: GENERATED_ICON_PATHS['select_all'],
+        state: { kind: 'command' },
+      },
     ],
   },
 ] as const;
@@ -765,7 +779,9 @@ export type ChromeSlotId =
   | 'insert.pageBreak'
   | 'insert.sectionBreakNextPage'
   | 'insert.sectionBreakContinuous'
-  | 'insert.toc';
+  | 'insert.toc'
+  | 'insert.richTextControl'
+  | 'insert.plainTextControl';
 
 /**
  * Every control id in the chrome, as a literal union. Unique WITHIN a group, not
@@ -1006,6 +1022,9 @@ export const CHROME_MENUS: readonly ChromeMenu[] = [
         ],
       },
       { kind: 'item', slot: 'insert.toc' },
+      { kind: 'separator' },
+      { kind: 'item', slot: 'insert.richTextControl' },
+      { kind: 'item', slot: 'insert.plainTextControl' },
     ],
   },
   {

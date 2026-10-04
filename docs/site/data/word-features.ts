@@ -973,7 +973,7 @@ export const wordFeatures: WordFeature[] = [
     roundTrip: 'preserved',
     tier: 'community',
     notes:
-      'The saved result displays for a complex field and for w:fldSimple. Field codes round-trip unchanged. Option+F9 on macOS and Alt+F9 on Windows toggle instruction display without changing the document. Some Mac keyboards require Fn. SYMBOL renders its character with the requested font and size. MACROBUTTON and GOTOBUTTON render display text without running the macro or jump. TITLE, AUTHOR, SUBJECT, KEYWORDS, LASTSAVEDBY, COMMENTS, and matching DOCPROPERTY fields render sanitized document metadata. DATE-valued properties stay inert. DATE, TIME, FILENAME, SEQ, LISTNUM, and EQ do not calculate a new value. The editor never runs macros, DDE instructions, or external include instructions.',
+      'The saved result displays for a complex field and for w:fldSimple. Field codes round-trip unchanged. Option+F9 on macOS and Alt+F9 on Windows toggle instruction display without changing the document. Some Mac keyboards require Fn. SYMBOL renders its character with the requested font and size. MACROBUTTON and GOTOBUTTON render display text without running the macro or jump. TITLE, AUTHOR, SUBJECT, KEYWORDS, LASTSAVEDBY, COMMENTS, and matching DOCPROPERTY fields render sanitized document metadata. DATE-valued properties stay inert. The automation API writes MERGEFIELD results from supplied values, with the \\b, \\f, and \\* case switches; date and number pictures are refused. DATE, TIME, FILENAME, SEQ, LISTNUM, and EQ do not calculate a new value. The editor never runs macros, DDE instructions, or external include instructions.',
     docsLink: '/docs/2.x/guides/fields',
   },
   {
@@ -1009,19 +1009,19 @@ export const wordFeatures: WordFeature[] = [
     roundTrip: 'full',
     tier: 'community',
     notes:
-      'Block, inline, row, and cell controls are addressable across stories, including tables, headers, footers, and notes. Value updates preserve enclosing table structure and formatting after saving and reopening. The editor rejects updates that would discard tables or nested controls. Find, create, fill, and remove controls by tag, title, or file ID. Inserting at the caret creates an empty control with a placeholder as one undo step. Tag, title, and lock values are editable through the API. All four `w:lock` modes apply, including enclosing locks and nested bound controls. Locks affect the control and its content. Under forms protection, only control content is editable. Repeating-section and custom-XML-bound controls are preserved. Bound content cannot be edited; control removal remains available.',
+      'Block, inline, row, and cell controls are addressable across stories, including tables, headers, footers, and notes. Value updates preserve enclosing table structure and formatting after saving and reopening. The editor rejects updates that would discard tables or nested controls. Find, create, fill, and remove controls by tag, title, or file ID. The Insert menu inserts rich text and plain text controls. Inserting at the caret creates an empty control with a placeholder as one undo step. A selection of whole body paragraphs becomes one block rich text control. With show all on, every control shows its title, or its tag when it has no title. Tag, title, and lock values are editable through the API. All four `w:lock` modes apply, including enclosing locks and nested bound controls. Locks affect the control and its content. Under forms protection, only control content is editable. Repeating-section and custom-XML-bound controls are preserved. Bound content cannot be edited; control removal remains available.',
     docsLink: '/docs/2.x/guides/content-controls',
   },
   {
     id: 'structure.repeating-sections',
     name: 'Repeating section controls',
     category: 'structure',
-    editing: 'none',
+    editing: 'partial',
     rendering: 'full',
     roundTrip: 'full',
     tier: 'community',
     notes:
-      'Repeating-section markup is preserved and rendered. Item add and remove operations and section configuration edits are unsupported.',
+      'Repeating-section markup is preserved and rendered. The automation API adds a copy of an item after it and removes an item by index; the last item cannot be removed. A copy gets fresh control and paragraph IDs and no bookmarks. Items holding comments, notes, tracked changes, drawings, or permission ranges cannot be copied. The editor has no add or remove buttons, and section configuration edits are unsupported.',
     docsLink: '/docs/2.x/guides/content-controls',
   },
   {

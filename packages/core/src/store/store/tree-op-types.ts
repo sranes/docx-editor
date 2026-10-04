@@ -601,13 +601,17 @@ export type TreeDocOp =
       };
     }
   | {
-      /** Repeating-section item insert — unsupported at this layer (out of scope). */
+      /**
+       * Add a copy of the item at `index` (default: the last) right after it. Control and
+       * paragraph ids are minted afresh and bookmarks dropped; an item holding a comment, note
+       * reference, tracked change, drawing or permission range refuses.
+       */
       readonly op: 'addRepeatingSectionItem';
       readonly controlId: string;
       readonly index?: number;
     }
   | {
-      /** Repeating-section item remove — unsupported at this layer (out of scope). */
+      /** Remove the item at `index`. The last remaining item refuses, as in Word. */
       readonly op: 'removeRepeatingSectionItem';
       readonly controlId: string;
       readonly index: number;
@@ -910,6 +914,21 @@ export type TreeDocOp =
       readonly start: number;
       readonly end: number;
       readonly type: InsertableContentControlKind;
+      readonly tag?: string;
+      readonly alias?: string;
+      readonly lock?: ContentControlLock;
+    }
+  | {
+      /**
+       * Wrap whole sibling blocks — `firstBlockId` through `lastBlockId`, paragraphs and tables
+       * under one parent — in a new BLOCK-level rich text control.
+       *
+       * The blocks move into the control's `w:sdtContent` with their ids, so comments,
+       * bookmarks and every other anchor in them stay where they were.
+       */
+      readonly op: 'wrapBlocksInContentControl';
+      readonly firstBlockId: string;
+      readonly lastBlockId: string;
       readonly tag?: string;
       readonly alias?: string;
       readonly lock?: ContentControlLock;

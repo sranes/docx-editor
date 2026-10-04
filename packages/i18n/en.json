@@ -61,6 +61,8 @@
     "sectionBreakNextPage": "Section break (next page)",
     "sectionBreakContinuous": "Section break (continuous)",
     "tableOfContents": "Table of contents",
+    "richTextControl": "Rich text content control",
+    "plainTextControl": "Plain text content control",
     "watermark": "Watermark",
     "help": "Help",
     "reportIssue": "Report issue",

@@ -45,17 +45,9 @@ export interface CollaborationCoverageContract {
   readonly contentControlTypes: ReadonlyMap<InsertableControlType, string>;
 }
 
-const REPEATING_SECTION_REASON =
-  'Repeating-section items are refused at apply time (reason "unsupported"): the op reaches ' +
-  'no store mutation, so there is no journal to replicate. Promote by implementing the op, ' +
-  'then add a coverage fixture.';
-
 export const COLLABORATION_UNCOVERED: CollaborationCoverageContract = Object.freeze({
-  opKinds: new Map<TreeDocOpKind, string>([
-    ['addRepeatingSectionItem', REPEATING_SECTION_REASON],
-    ['removeRepeatingSectionItem', REPEATING_SECTION_REASON],
-  ]),
-  // Every accepted property, wrap target, and control type replicates today; none is excused.
+  // Every op, accepted property, wrap target, and control type replicates today; none is excused.
+  opKinds: new Map<TreeDocOpKind, string>(),
   paragraphProperties: new Map<AcceptedParagraphProperty, string>(),
   runProperties: new Map<AcceptedRunProperty, string>(),
   wrapTargets: new Map<ImageWrapTarget, string>(),

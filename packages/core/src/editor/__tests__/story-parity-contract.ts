@@ -130,6 +130,8 @@ export const SLOT_PARITY: Readonly<Record<ChromeSlotId, ParityRule>> = Object.fr
   'contentControl.formFill': { parity: 'same' },
   'contentControl.inspector': { parity: 'same' },
   'contentControl.remove': { parity: 'same' },
+  'insert.richTextControl': { parity: 'same' },
+  'insert.plainTextControl': { parity: 'same' },
   'image.insert': { parity: 'same' },
   'image.properties': { parity: 'same' },
   'image.wrap': { parity: 'same' },

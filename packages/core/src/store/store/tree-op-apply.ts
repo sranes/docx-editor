@@ -123,6 +123,8 @@ import {
 } from './tree-op-section.ts';
 import { pageFieldContentBuilders, pageFieldModelLength } from './tree-op-fields.ts';
 import { applyInsertContentControl as applyAutomationInsertContentControl } from './tree-op-content-control-insert.ts';
+import { applyWrapBlocksInContentControl } from './tree-op-content-control-wrap.ts';
+import { applyRepeatingSectionOp } from './tree-op-repeating-section.ts';
 import {
   applyRemoveContentControl as applyAutomationRemoveContentControl,
   applySetContentControlProperties as applyAutomationSetContentControlProperties,
@@ -235,6 +237,8 @@ export function applyTreeOp(part: OoxmlPart, op: TreeDocOp, options?: EditOption
   if (op.op === 'removeContentControl' && op.keepContent !== undefined) {
     return applyAutomationRemoveContentControl(part, op, options);
   }
+  if (op.op === 'wrapBlocksInContentControl')
+    return applyWrapBlocksInContentControl(part, op, options);
   if (op.op === 'insertContentControl') {
     return applyAutomationInsertContentControl(part, op, options);
   }
@@ -375,7 +379,7 @@ export function applyTreeOp(part: OoxmlPart, op: TreeDocOp, options?: EditOption
     return { ok: false, reason: 'invalidArgs', detail: 'package-lifecycle-op' };
   }
   if (op.op === 'addRepeatingSectionItem' || op.op === 'removeRepeatingSectionItem') {
-    return { ok: false, reason: 'unsupported' };
+    return applyRepeatingSectionOp(part, op, options);
   }
 
   const paragraph = findNode(part, op.paragraphId) as OoxmlParagraphNode;

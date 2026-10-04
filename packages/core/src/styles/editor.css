@@ -964,7 +964,8 @@ a.docx-hyperlink:focus-visible {
 }
 
 .docx-content-control-chrome[data-active] .docx-content-control-label,
-.docx-content-control-chrome[data-open] .docx-content-control-label {
+.docx-content-control-chrome[data-open] .docx-content-control-label,
+.docx-content-control-chrome[data-show-all] .docx-content-control-label {
   display: block;
 }
 

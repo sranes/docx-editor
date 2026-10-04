@@ -39,17 +39,33 @@ test('create tagged control, fill it, and preserve surrounding text after reopen
   next.dispose();
 });
 
-test('control creation refuses unsupported types and spans across paragraphs', async () => {
+test('control creation refuses unsupported types and plain text across paragraphs', async () => {
   const runtime = await serverRuntime(docx(p('First') + p('Second')));
   const before = await mainXmlOf(runtime);
   await runtime.run(async (context) => {
     const range = context.document.body.getRange();
     await context.sync();
     expect(() => range.insertContentControl('Picture')).toThrow();
-    range.insertContentControl();
+    // Whole paragraphs take only a rich text control.
+    range.insertContentControl('PlainText');
     await expect(context.sync()).rejects.toBeDefined();
   });
   expect(await mainXmlOf(runtime)).toBe(before);
+  runtime.dispose();
+});
+
+test('a rich text control over whole paragraphs is a block control around them', async () => {
+  const runtime = await serverRuntime(docx(p('First') + p('Second')));
+  await runtime.run(async (context) => {
+    const created = context.document.body.getRange().insertContentControl();
+    await context.sync();
+    created.tag = 'if:rule';
+    await context.sync();
+  });
+  const xml = await mainXmlOf(runtime);
+  expect(xml).toMatch(
+    /<w:sdt><w:sdtPr>.*if:rule.*<\/w:sdtPr><w:sdtContent><w:p[ >].*First.*<\/w:p><w:p[ >].*Second.*<\/w:p><\/w:sdtContent><\/w:sdt>/
+  );
   runtime.dispose();
 });
 

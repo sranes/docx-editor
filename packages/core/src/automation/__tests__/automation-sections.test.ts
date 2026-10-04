@@ -247,6 +247,47 @@ describe('a header is a story of its own', () => {
     expect(host.save()).toEqual(before);
   });
 
+  test('every whole-story read of an absent variant answers empty, as getText does', () => {
+    const host = withFurniture();
+    const before = host.save();
+    const [section] = sectionsOf(host) as [AutomationHandle];
+    const body = handleAt(
+      host.execute({
+        operations: [{ op: 'getFurniture', section, kind: 'footer', variant: 'even' }],
+      }),
+      0
+    );
+    const response = host.execute({
+      operations: [
+        { op: 'search', scope: { body }, text: 'page' },
+        { op: 'getContentControls', scope: { body } },
+        { op: 'getContentControlsByTag', scope: { body }, tag: 'x' },
+        { op: 'getTables', scope: { body } },
+        { op: 'getFields', span: { body } },
+        { op: 'getBookmarks', scope: { body } },
+        { op: 'getSpanText', span: { body } },
+      ],
+    });
+    expect(response.ok).toBe(true);
+    expect(response.results.map((result) => result.status === 'ok' && result.value)).toEqual([
+      { kind: 'spans', spans: [] },
+      { kind: 'handles', handles: [] },
+      { kind: 'handles', handles: [] },
+      { kind: 'handles', handles: [] },
+      { kind: 'handles', handles: [] },
+      { kind: 'handles', handles: [] },
+      { kind: 'text', text: '' },
+    ]);
+    // Like an empty declared story, it has no place to name.
+    expect(
+      errorAt(
+        host.execute({ operations: [{ op: 'getRange', span: { body }, location: 'Whole' }] }),
+        0
+      )
+    ).toBe('invalid-offset');
+    expect(host.save()).toEqual(before);
+  });
+
   test('text written into a header lands in the header part and survives save and reopen', () => {
     const host = withFurniture();
     const [section] = sectionsOf(host) as [AutomationHandle];

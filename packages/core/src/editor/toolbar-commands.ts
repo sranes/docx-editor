@@ -100,6 +100,8 @@ const SLOT_COMMANDS: Partial<Record<ChromeSlotId, EditorCommand>> = {
   'insert.sectionBreakNextPage': { type: 'insertBreak', kind: 'section' },
   'insert.sectionBreakContinuous': { type: 'insertBreak', kind: 'sectionContinuous' },
   'insert.toc': { type: 'insertToc' },
+  'insert.richTextControl': { type: 'insertContentControl', subtype: 'richText' },
+  'insert.plainTextControl': { type: 'insertContentControl', subtype: 'plainText' },
   // Content-control remove maps to the public edit shape; the Editor facade resolves the
   // caret control. Show-all / form-fill / inspector are surface chrome, not commands — see
   // the special cases in `toolbarCommandState` / `runToolbarCommand`.

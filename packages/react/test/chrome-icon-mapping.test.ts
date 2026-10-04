@@ -89,6 +89,8 @@ const ICON_FOR_SLOT: Record<string, string> = {
   'insert.sectionBreakNextPage': 'horizontal_rule',
   'insert.sectionBreakContinuous': 'border_horizontal',
   'insert.toc': 'toc',
+  'insert.richTextControl': 'edit_note',
+  'insert.plainTextControl': 'select_all',
 };
 
 const INSERT_NOTE_AND_TOC_SLOTS = ['insert.footnote', 'insert.endnote', 'insert.toc'] as const;

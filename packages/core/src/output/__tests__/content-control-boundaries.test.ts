@@ -47,6 +47,33 @@ describe('content-control boundary paint seam', () => {
     expect(chrome!.hasAttribute('data-active')).toBe(false);
   });
 
+  test('a control with no title is labelled with its tag, and show-all marks every chrome', () => {
+    const layout = layoutSemanticDocument(
+      load(
+        `<w:sdt><w:sdtPr><w:tag w:val="var:City"/><w:text/></w:sdtPr>` +
+          `<w:sdtContent><w:p><w:r><w:t>London</w:t></w:r></w:p></w:sdtContent></w:sdt>`
+      ),
+      1,
+      { measurer: createFixedMeasurer(6, 14) }
+    );
+    const container = document.createElement('div');
+    paintSemanticLayout(container, layout, { contentControlChrome: { showAll: true } });
+    const label = container.querySelector<HTMLElement>('.docx-content-control-label');
+    expect(label?.textContent).toBe('var:City');
+    expect(label?.dataset.source).toBe('tag');
+    expect(
+      container
+        .querySelector<HTMLElement>('[data-docx-content-control]')
+        ?.hasAttribute('data-show-all')
+    ).toBe(true);
+
+    const quiet = document.createElement('div');
+    paintSemanticLayout(quiet, layout);
+    expect(
+      quiet.querySelector<HTMLElement>('[data-docx-content-control]')?.hasAttribute('data-show-all')
+    ).toBe(false);
+  });
+
   test('boundary furniture translates content-local geometry into sheet coordinates', () => {
     const layout = layoutSemanticDocument(
       load(

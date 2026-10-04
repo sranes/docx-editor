@@ -287,7 +287,9 @@ export class Range extends ModelObject implements PromisedItem {
   }
 
   /**
-   * Wrap this single-paragraph range in a rich-text or plain-text content control.
+   * Wrap this range in a rich-text or plain-text content control. A range inside one paragraph
+   * makes an inline control. A range over whole paragraphs makes a block-level rich-text control
+   * around them; a range that crosses a paragraph mark mid-text refuses.
    * Await sync before configuring the returned control. Other types explicitly refuse.
    */
   insertContentControl(

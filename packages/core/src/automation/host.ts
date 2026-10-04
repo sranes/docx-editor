@@ -183,6 +183,7 @@ export function createAutomationHost(composition: AutomationHostComposition): Au
         : {}),
       ...(port.fieldPageContext ? { fieldPageContext: port.fieldPageContext.bind(port) } : {}),
       ...(port.select ? { select: port.select.bind(port) } : {}),
+      ...(port.selection ? { selection: port.selection.bind(port) } : {}),
     });
 
     // PLAN EVERYTHING FIRST. A query's answer is final here; a command's is a closure, because

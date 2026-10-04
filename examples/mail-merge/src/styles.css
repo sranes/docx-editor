@@ -1,0 +1,93 @@
+/* In a consumer app: @import '@docx-editor.dev/core/styles/editor.css';
+   This sample runs the packages from SOURCE, so it imports the same file from there. */
+@import '../../../packages/core/src/styles/editor.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Host chrome only. The editor leaves room on the right for the panel. */
+.mm-app {
+  height: 100%;
+  margin-right: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.mm-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 300px;
+  overflow-y: auto;
+  padding: 12px;
+  border-left: 1px solid #d0d7de;
+  background: #f6f8fa;
+  color: #1f2328;
+  font:
+    13px system-ui,
+    sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mm-panel h2 {
+  font-size: 16px;
+}
+
+.mm-panel h3 {
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.mm-panel section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mm-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mm-panel input,
+.mm-panel select,
+.mm-panel button {
+  font: inherit;
+  padding: 4px 6px;
+  border: 1px solid #d0d7de;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.mm-panel button {
+  cursor: pointer;
+}
+
+.mm-row {
+  display: flex;
+  gap: 6px;
+}
+
+.mm-row button {
+  flex: 1;
+}
+
+.mm-log {
+  flex: 1;
+  min-height: 120px;
+  margin: 0;
+  padding: 8px;
+  overflow: auto;
+  white-space: pre-wrap;
+  font:
+    11px ui-monospace,
+    monospace;
+  background: #fff;
+  border: 1px solid #d0d7de;
+  border-radius: 4px;
+}
